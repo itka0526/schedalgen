@@ -46,11 +46,7 @@ class ScheduleProblemSolution:
         self.hall_of_fame_size = hall_of_fame_size
         self.tournament_size = tournament_size
         self.random_seed = random_seed
-        self.schedule_problem = (
-            schedule_problem
-            if schedule_problem is not None
-            else ScheduleProblem()
-        )
+        self.schedule_problem = schedule_problem if schedule_problem is not None else ScheduleProblem()
         self.schedule_problem_benchmark = (
             schedule_problem_benchmark
             if schedule_problem_benchmark is not None
@@ -85,9 +81,7 @@ class ScheduleProblemSolution:
         best_individual_string = "".join(map(str, best_individual))
         self.schedule_problem_benchmark.calculate_cost(best_individual_string)
         min_fitness_values, mean_fitness_values = logbook.select("min", "mean")
-        self.schedule_problem.save_table(
-            best_individual_string, "schedule.json"
-        )
+        self.schedule_problem.save_table(best_individual_string, "schedule.json")
         report = (
             "Solution report\n\n"
             f"Best fitness value: {best_individual.fitness.values[0]}\n"
@@ -98,9 +92,7 @@ class ScheduleProblemSolution:
         print(report)
 
         _, axis = plt.subplots()
-        max_value = np.max(
-            np.concatenate([min_fitness_values, mean_fitness_values])
-        )
+        max_value = np.max(np.concatenate([min_fitness_values, mean_fitness_values]))
         y_limit = int((max_value + 10) - (max_value % 10))
         axis.set_xlim(0, self.max_generations)
         axis.set_ylim(0, y_limit)
@@ -130,55 +122,37 @@ class ScheduleProblemSolution:
         the next generation and are not subject to the genetic operators of
         selection, crossover and mutation.
         """
-        # РАБОАТЬ НАДО ТУТ!!!
-        # РАБОАТЬ НАДО ТУТ!!!
-        # РАБОАТЬ НАДО ТУТ!!!
-        # РАБОАТЬ НАДО ТУТ!!!
-        # РАБОАТЬ НАДО ТУТ!!!
         logbook = tools.Logbook()
         # fmt: off
-        logbook.header = ("gen", "nevals")  # pyright: ignore[reportAttributeAccessIssue]
+        logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
         # fmt: on
 
         # Evaluate the individuals with an invalid fitness
-        invalid_individual = [
-            individual
-            for individual in population
-            if not individual.fitness.valid
-        ]
-        fitnesses = toolbox.map(toolbox.evaluate, invalid_individual)
-        for individual, fitness in zip(invalid_individual, fitnesses):
-            individual.fitness.values = fitness
+        invalid_individuals = [ind for ind in population if not ind.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_individuals)
+        for ind, fit in zip(invalid_individuals, fitnesses):
+            ind.fitness.values = fit
 
         if hall_of_fame is None:
             raise ValueError("halloffame parameter must not be empty!")
 
         hall_of_fame.update(population)
-        hof_size = len(hall_of_fame.items) if hall_of_fame.items else 0
-
         record = stats.compile(population) if stats else {}
-        logbook.record(gen=0, nevals=len(invalid_individual), **record)
+        logbook.record(gen=0, nevals=len(invalid_individuals), **record)
         if verbose:
             print(logbook.stream)
 
         # Begin the generational process
-        for generation in range(1, n_generations + 1):
+        for gen in range(1, n_generations + 1):
             # Select the next generation individuals
-            offspring = toolbox.select(population, len(population) - hof_size)
+            offspring = toolbox.select(population, len(population) - len(hall_of_fame.items))
             # Vary the pool of individuals
-            offspring = algorithms.varAnd(
-                offspring, toolbox, crossover_proba, mutation_proba
-            )
+            offspring = algorithms.varAnd(offspring, toolbox, crossover_proba, mutation_proba)
             # Evaluate the individuals with an invalid fitness
-            invalid_individual = [
-                individual
-                for individual in offspring
-                if not individual.fitness.valid
-            ]
-            fitnesses = toolbox.map(toolbox.evaluate, invalid_individual)
-            print(list(fitnesses))
-            for individual, fitness in zip(invalid_individual, fitnesses):
-                individual.fitness.values = fitness
+            invalid_offspring = [ind for ind in offspring if not ind.fitness.valid]
+            fitnesses = toolbox.map(toolbox.evaluate, invalid_offspring)
+            for ind, fit in zip(invalid_offspring, fitnesses):
+                ind.fitness.values = fit
 
             # Add the best back to population
             offspring.extend(hall_of_fame.items)
@@ -188,9 +162,7 @@ class ScheduleProblemSolution:
             population[:] = offspring
             # Append the current generation statistics to the logbook
             record = stats.compile(population) if stats else {}
-            logbook.record(
-                gen=generation, nevals=len(invalid_individual), **record
-            )
+            logbook.record(gen=gen, nevals=len(invalid_offspring), **record)
             if verbose:
                 print(logbook.stream)
 
@@ -198,9 +170,7 @@ class ScheduleProblemSolution:
 
     def calculateCost(self, individual) -> Tuple:
         individual_string = "".join(map(str, individual))
-        cost = (
-            self.schedule_problem_benchmark.calculate_cost(individual_string),
-        )
+        cost = (self.schedule_problem_benchmark.calculate_cost(individual_string),)
         return cost
 
     def _setup(self) -> None:
@@ -226,18 +196,14 @@ class ScheduleProblemSolution:
             self.toolbox.individualCreator,
         )
         self.toolbox.register("evaluate", self.calculateCost)
-        self.toolbox.register(
-            "select", tools.selTournament, tournsize=self.tournament_size
-        )
+        self.toolbox.register("select", tools.selTournament, tournsize=self.tournament_size)
         # ВОТ ТУТ ОСОБЕННО!!!
         # ВОТ ТУТ ОСОБЕННО!!!
         # ВОТ ТУТ ОСОБЕННО!!!
         # ВОТ ТУТ ОСОБЕННО!!!
         # ВОТ ТУТ ОСОБЕННО!!!
         self.toolbox.register("mate", tools.cxTwoPoint)
-        self.toolbox.register(
-            "mutate", tools.mutFlipBit, indpb=1.0 / len(self.schedule_problem)
-        )
+        self.toolbox.register("mutate", tools.mutFlipBit, indpb=1.0 / len(self.schedule_problem))
         # ВОТ ТУТ ОСОБЕННО!!!
         # ВОТ ТУТ ОСОБЕННО!!!
         # ВОТ ТУТ ОСОБЕННО!!!
